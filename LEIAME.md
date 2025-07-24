@@ -41,3 +41,4 @@ npx expo install react-native-appwrite react-native-url-polyfill
 
 ## INSTALL 
 npx expo install react-native-paper
+
