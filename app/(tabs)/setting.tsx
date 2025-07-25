@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { StyleSheet, View, Alert } from 'react-native'
-import { Button, TextInput } from 'react-native-paper'
+import { Button, TextInput, PaperProvider } from 'react-native-paper'
 import { Session } from '@supabase/supabase-js'
 
 export default function Setting({ session }: { session: Session }) {
@@ -9,11 +9,10 @@ export default function Setting({ session }: { session: Session }) {
     <View style={styles.container}>
       <View style={styles.verticallySpaced}>
 
-        <Button mode="outlined"
+          <Button mode="outlined"
                 onPress={() => supabase.auth.signOut()}>
                 Sign Out
-        </Button>
-
+          </Button>
       </View>
 
     </View>

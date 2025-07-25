@@ -56,101 +56,89 @@ export default function AuthScreen() {
     fetchInstitutes();
   }, []);
 
-const handleLogin = async () => {
-  if (!isLoginReady) {
-    Alert.alert('Falta informação', 'Email e senha são obrigatórios.');
-    return;
-  }
-  setLoading(true);
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) Alert.alert('Erro no login', error.message);
-  else Alert.alert('Sua sessão foi iniciada com sucesso!');
-  setLoading(false);
-};
-
-
-
-
-
-const handleRegister = async () => {
-  if (!isRegisterReady) {
-    Alert.alert('Por favor preencha todos os campos.');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    //TMNC AI
-    //RESOLVI EM 10 MIN!
-    const { data: correspData, error: correspError} = await supabase
-      .from("corresp")
-      .select("*")
-      .eq("access_key", chave)
-
-    if(correspError){
-      console.error("Houve falha na busca: ", correspError);
-      Alert.alert("Ocorreu erro ao verificar. Tente novamente");
-      setLoading(false);
+  const handleLogin = async () => {
+    if (!isLoginReady) {
+      Alert.alert('Falta informação', 'Email e senha são obrigatórios.');
       return;
     }
-    if(!correspData){
-      Alert.alert("Chave inválida. '${chave}' não foi encontrada");
-      setLoading(false);
-      return;
-    }
-
-    // 3. Cadastra usuário no Auth
-    const { data: { session }, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (signUpError || !session?.user) {
-      console.error("Erro no cadastro do usuário:", signUpError?.message || 'Nenhuma sessão retornada');
-      Alert.alert('Erro no Cadastro', signUpError?.message || 'Nenhuma sessão retornada após o cadastro. Tente novamente.');
-      setLoading(false);
-      return;
-    }
-
-    const userId = session.user.id;
-
-    // 4. Insere dados do perfil
-    const { error: insertError } = await supabase.from('profiles').insert({
-      id: userId,
-      name,
-      nusp,
-      skill_level: skillLevel,
-      institute_id: selectedInstitute.id,
-    });
-
-    if (insertError) {
-      console.error("Erro ao salvar perfil:", insertError.message);
-      Alert.alert('Erro ao salvar perfil', `Ocorreu um erro ao salvar suas informações de perfil: ${insertError.message}`);
-
-      // Tenta deletar usuário criado se perfil falhou (Edge Function/Server necessário se não for admin)
-      await supabase.auth.admin.deleteUser(userId);
-    } else {
-      Alert.alert(
-        session ? 'Cadastro realizado com sucesso!' : 'Verifique seu e-mail',
-        session ? 'Bem-vindo ao app!' : 'Verifique seu e-mail para ativar sua conta e prosseguir com o login.'
-      );
-    }
-  } 
-  
-  
-  
-  catch (error) {
-    console.error("Erro geral no processo de cadastro:", error);
-    Alert.alert('Erro Inesperado', 'Ocorreu um erro inesperado durante o cadastro. Por favor, tente novamente.');
-  } finally {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) Alert.alert('Erro no login', error.message);
+    else Alert.alert('Sua sessão foi iniciada com sucesso!');
     setLoading(false);
-  }
+  };
 
+  const handleRegister = async () => {
+    if (!isRegisterReady) {
+      Alert.alert('Por favor preencha todos os campos.');
+      return;
+    }
+    setLoading(true);
+    try {
+      //TMNC AI
+      //RESOLVI EM 10 MIN!
+      const { data: correspData, error: correspError} = await supabase
+        .from("corresp")
+        .select("*")
+        .eq("access_key", chave)
 
-};
+      if(correspError){
+        console.error("Houve falha na busca: ", correspError);
+        Alert.alert("Ocorreu erro ao verificar. Tente novamente");
+        setLoading(false);
+        return;
+      }
+      
+      if(!correspData){
+        Alert.alert("Chave inválida. '${chave}' não foi encontrada");
+        setLoading(false);
+        return;
+      }
 
+      //Cadastra usuário no Auth
+      const { data: { session }, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
+      if (signUpError || !session?.user) {
+        console.error("Erro no cadastro do usuário:", signUpError?.message || 'Nenhuma sessão retornada');
+        Alert.alert('Erro no Cadastro', signUpError?.message || 'Nenhuma sessão retornada após o cadastro. Tente novamente.');
+        setLoading(false);
+        return;
+      }
+
+      const userId = session.user.id;
+
+      //Insere dados do perfil
+      const { error: insertError } = await supabase.from('profiles').insert({
+        id: userId,
+        name,
+        nusp,
+        skill_level: skillLevel,
+        institute_id: selectedInstitute.id,
+      });
+
+      if (insertError) {
+        console.error("Erro ao salvar perfil:", insertError.message);
+        Alert.alert('Erro ao salvar perfil', `Ocorreu um erro ao salvar suas informações de perfil: ${insertError.message}`);
+
+        //Tenta deletar usuário criado se perfil falhou (Edge Function/Server necessário se não for admin)
+        await supabase.auth.admin.deleteUser(userId);
+      } else {
+        Alert.alert(
+          session ? 'Cadastro realizado com sucesso!' : 'Verifique seu e-mail',
+          session ? 'Bem-vindo ao app!' : 'Verifique seu e-mail para ativar sua conta e prosseguir com o login.'
+        );
+      }
+    } 
+    catch (error) {
+      console.error("Erro geral no processo de cadastro:", error);
+      Alert.alert('Erro Inesperado', 'Ocorreu um erro inesperado durante o cadastro. Por favor, tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 20 }}>
