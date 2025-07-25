@@ -22,7 +22,7 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [nusp, setNusp] = useState('');
-  const [access_key, setAccessKey] = useState('');
+  const [chave, setChave] = useState('');
 
   const [skillLevel, setSkillLevel] = useState('');
   const [institutes, setInstitutes] = useState<Institute[]>([]);
@@ -32,7 +32,7 @@ export default function AuthScreen() {
   const [showInstituteModal, setShowInstituteModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const isRegisterReady = !!(email && password && name && nusp && skillLevel && selectedInstitute && access_key);
+  const isRegisterReady = !!(email && password && name && nusp && skillLevel && selectedInstitute && chave);
   const isLoginReady = !!(email && password);
 
   useEffect(() => {
@@ -68,6 +68,10 @@ const handleLogin = async () => {
   setLoading(false);
 };
 
+
+
+
+
 const handleRegister = async () => {
   if (!isRegisterReady) {
     Alert.alert('Por favor preencha todos os campos.');
@@ -77,63 +81,21 @@ const handleRegister = async () => {
   setLoading(true);
 
   try {
-    const trimmedKey = access_key.trim().normalize('NFC');
-    console.log('[DEBUG] Chave sendo verificada:', trimmedKey);
-    console.log('[DEBUG] Chave (códigos unicode):', [...trimmedKey].map(c => c.charCodeAt(0)));
+    //TMNC AI
+    //RESOLVI EM 10 MIN!
+    const { data: correspData, error: correspError} = await supabase
+      .from("corresp")
+      .select("*")
+      .eq("access_key", chave)
 
-    // 1. Debug: Listar todas as chaves disponíveis
-    const { data: allKeys, error: allKeysError } = await supabase
-      .from('corresp')
-      .select('access_key')
-      .order('access_key');
-
-    if (allKeysError) {
-      console.error('[DEBUG] Erro ao buscar todas as chaves:', allKeysError);
-    }
-
-    console.log('[DEBUG] Todas as chaves disponíveis (com códigos):');
-    console.table(
-      (allKeys || []).map(k => ({
-        key: k.access_key,
-        length: k.access_key.length,
-        codes: [...k.access_key].map(c => c.charCodeAt(0)),
-      }))
-    );
-    
-    console.table(
-  (allKeys || []).map(k => ({
-    key: k.access_key,
-    length: k.access_key.length,
-    codes: [...k.access_key].map(c => c.charCodeAt(0)).join(','),
-  }))
-);
-
-    // 2. Verificação da chave específica com .ilike (mais tolerante que .eq)
-    const { data: correspData, error: correspError } = await supabase
-      .from('corresp')
-      .select('access_key')
-      .ilike('access_key', trimmedKey)
-      .maybeSingle();
-
-    console.log('[DEBUG] Resultado da verificação:', {
-      chaveProcurada: trimmedKey,
-      encontrada: correspData ? 'SIM' : 'NÃO',
-      erro: correspError,
-      chaveRetornada: correspData ? correspData.access_key : 'N/A',
-    });
-
-    if (correspError) {
-      console.error("Erro na consulta de chave:", correspError);
-      Alert.alert('Erro', 'Ocorreu um erro ao verificar a chave. Tente novamente.');
+    if(correspError){
+      console.error("Houve falha na busca: ", correspError);
+      Alert.alert("Ocorreu erro ao verificar. Tente novamente");
       setLoading(false);
       return;
     }
-
-    if (!correspData) {
-      Alert.alert(
-        'Chave inválida',
-        `A chave "${trimmedKey}" não foi encontrada. Verifique se digitou corretamente ou se há espaços/caracteres especiais.`
-      );
+    if(!correspData){
+      Alert.alert("Chave inválida. '${chave}' não foi encontrada");
       setLoading(false);
       return;
     }
@@ -174,13 +136,21 @@ const handleRegister = async () => {
         session ? 'Bem-vindo ao app!' : 'Verifique seu e-mail para ativar sua conta e prosseguir com o login.'
       );
     }
-  } catch (error) {
+  } 
+  
+  
+  
+  catch (error) {
     console.error("Erro geral no processo de cadastro:", error);
     Alert.alert('Erro Inesperado', 'Ocorreu um erro inesperado durante o cadastro. Por favor, tente novamente.');
   } finally {
     setLoading(false);
   }
+
+
 };
+
+
 
   return (
     <ScrollView contentContainerStyle={{ padding: 20 }}>
@@ -221,8 +191,8 @@ const handleRegister = async () => {
           />
           <TextInput
             label="Chave de Acesso"
-            value={access_key}
-            onChangeText={setAccessKey}
+            value={chave}
+            onChangeText={setChave}
             style={{ marginBottom: 10 }}
           />
 
@@ -296,3 +266,4 @@ const handleRegister = async () => {
     </ScrollView>
   );
 }
+
